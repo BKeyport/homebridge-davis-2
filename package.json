@@ -1,0 +1,22 @@
+{
+  "name": "homebridge-davis-2",
+  "version": "0.0.2",
+  "description": "WeatherLink and AirLink integration for Homebridge",
+  "license": "MIT",
+  "keywords": [
+    "homebridge-plugin",
+    "homebridge",
+    "davis",
+    "weatherlink",
+    "airlink"
+  ],
+  "engines": {
+    "homebridge": ">=1.8.0",
+    "node": ">=18.0.0"
+  },
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourname/homebridge-davis-2.git"
+  }
+}

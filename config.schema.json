@@ -1,0 +1,92 @@
+{
+  "pluginAlias": "Davis2",
+  "pluginType": "platform",
+  "singular": false,
+
+  "headerDisplay": "Homebridge-Davis-2",
+
+  "schema": {
+    "type": "object",
+
+    "properties": {
+
+      "name": {
+        "title": "Platform Name",
+        "type": "string",
+        "default": "Davis Weather System"
+      },
+
+      "url": {
+        "title": "Davis Local API URL",
+        "type": "string",
+        "description": "Example: http://1.2.3.4/v1/current_conditions"
+      },
+
+      "pollingIntervalSeconds": {
+        "title": "Polling Interval",
+        "type": "integer",
+        "default": 60,
+        "minimum": 10
+      },
+
+      "staleAfterMinutes": {
+        "title": "Stale Threshold (minutes)",
+        "type": "integer",
+        "default": 5,
+        "minimum": 1
+      },
+
+      "temperatureUnit": {
+        "title": "Sensor Temperature Unit",
+        "type": "string",
+        "description": "What unit comes off the sensor? (If values seem wrong, try the other one)",
+        "enum": [
+          "F",
+          "C"
+        ]
+      },
+
+      "txids": {
+        "title": "Allowed TXIDs (Default is ID 1 only)",
+        "type": "array",
+        "items": {
+          "type": "integer"
+        },
+        "default": [
+          1
+        ]
+      },
+
+      "enableExternalSensors": {
+        "title": "Enable External Sensors",
+        "type": "boolean",
+        "default": true
+      },
+
+      "enableInternalSensor": {
+        "title": "Enable Internal Sensors",
+        "type": "boolean",
+        "default": true
+      },
+
+      "enableAirLink": {
+        "title": "Enable AirLink",
+        "type": "boolean",
+        "default": true
+      },
+
+      "debug": {
+        "title": "Enable Verbose Debug Logging",
+        "type": "boolean",
+        "default": false
+      }
+
+    },
+
+    "required": [
+      "url",
+      "temperatureUnit",
+      "staleAfterMinutes"
+    ]
+  }
+}
