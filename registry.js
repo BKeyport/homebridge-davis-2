@@ -1,4 +1,3 @@
-
 class Registry {
 
   constructor(platform) {
@@ -7,8 +6,13 @@ class Registry {
     this.log = platform.log;
 
     this.staleAfterSeconds = platform.staleAfterSeconds;
+    this.inputTemperatureUnit = platform.inputTemperatureUnit;
 
-    this.temperatureUnit = platform.temperatureUnit;
+    this.platform.logger.debug(
+      'Registry',
+      'Input temperature unit configured as: %s',
+      this.inputTemperatureUnit
+    );
 
     this.state = {
       lastUpdate: null,
@@ -16,7 +20,7 @@ class Registry {
       status: "INIT"
     };
 
-    this.log.info("Registry initialized");
+    this.platform.logger.debug('Registry', 'Initialized');
   }
 
   toCelsius(value) {
@@ -25,29 +29,66 @@ class Registry {
       return null;
     }
 
-    // already Celsius
-    if (this.temperatureUnit === "C") {
+    if (this.inputTemperatureUnit === "C") {
       return value;
     }
 
-    // Fahrenheit → Celsius
     return (value - 32) * (5 / 9);
+  }
+
+  resolveExternal(candidates) {
+
+    if (!Array.isArray(candidates)) {
+      return null;
+    }
+
+    const iss = candidates.find(x => x.type === 1);
+    if (iss) {
+      return {
+        source: "ISS",
+        temp: iss.temp,
+        humidity: iss.humidity
+      };
+    }
+
+    const airlink = candidates.find(x => x.type === 6);
+    if (airlink) {
+      return {
+        source: "AIRLINK",
+        temp: airlink.temp,
+        humidity: airlink.humidity
+      };
+    }
+
+    return null;
   }
 
   update(parsed) {
 
     if (!parsed) {
-      this.log.warn("Registry rejected update (null parsed data)");
+      this.platform.logger.debug('Registry', 'Update skipped (no parsed data)');
       return;
     }
+
+    this.platform.logger.debug('Registry', 'Update received');
 
     const now = Date.now();
     const previousStatus = this.state.status;
 
-    // 🔥 NORMALIZATION HAPPENS HERE
+    const external = this.resolveExternal(parsed.externalCandidates);
+
+    // ✅ NEW: external source INFO log
+    this.platform.logger.info(
+      "Registry",
+      "External source selected: %s",
+      external?.source ?? "NONE"
+    );
+
+    this.platform.logger.debug('Registry', 'Normalizing data to Celsius');
+
     const normalized = {
-      temperature: this.toCelsius(parsed.temperature),
-      humidity: parsed.humidity,
+      temperature: this.toCelsius(external?.temp ?? null),
+      humidity: external?.humidity ?? null,
 
       internalTemperature: this.toCelsius(parsed.internalTemperature),
       internalHumidity: parsed.internalHumidity,
@@ -59,22 +100,36 @@ class Registry {
     this.state.lastUpdate = now;
     this.state.status = "OK";
 
-    this.log.debug(`Registry state transition: ${previousStatus} → OK`);
-    this.log.debug("Registry updated (Celsius normalized)");
+    this.platform.logger.debug(
+      'Registry',
+      'State committed (previous status: %s → %s)',
+      previousStatus,
+      this.state.status
+    );
+
+    this.platform.logger.verbose(
+      'Registry',
+      'Normalized state: %j',
+      normalized
+    );
   }
 
   getState() {
 
+    this.platform.logger.debug('Registry', 'State requested');
+
     if (!this.state.lastUpdate) {
-      this.log.debug("Registry evaluated → NO_DATA");
+      this.platform.logger.debug('Registry', 'No data available');
       return { status: "NO_DATA", data: null };
     }
 
     const ageSeconds = (Date.now() - this.state.lastUpdate) / 1000;
 
+    this.platform.logger.debug('Registry', 'State age: %d seconds', ageSeconds);
+
     if (ageSeconds > this.staleAfterSeconds) {
 
-      this.log.debug(`Registry evaluated → STALE (${Math.round(ageSeconds)}s)`);
+      this.platform.logger.debug('Registry', 'State is STALE');
 
       return {
         status: "STALE",
@@ -83,7 +138,7 @@ class Registry {
       };
     }
 
-    this.log.debug("Registry evaluated → OK");
+    this.platform.logger.debug('Registry', 'State is OK');
 
     return {
       status: "OK",

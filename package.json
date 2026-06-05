@@ -1,22 +1,58 @@
 {
   "name": "homebridge-davis-2",
-  "version": "0.0.2",
+  "version": "0.5.0-beta.1",
   "description": "WeatherLink and AirLink integration for Homebridge",
   "license": "MIT",
+  "author": "Brendan Keyport",
+
   "keywords": [
     "homebridge-plugin",
     "homebridge",
+    "homekit",
     "davis",
     "weatherlink",
     "airlink"
   ],
+
   "engines": {
     "homebridge": ">=1.8.0",
     "node": ">=18.0.0"
   },
+
   "main": "index.js",
+
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourname/homebridge-davis-2.git"
+    "url": "https://github.com/bkeyport/homebridge-davis-2.git"
+  },
+
+  "homepage": "https://github.com/bkeyport/homebridge-davis-2",
+
+  "bugs": {
+    "url": "https://github.com/bkeyport/homebridge-davis-2/issues"
+  },
+
+  "homebridge": {
+    "platforms": [
+      {
+        "platform": "Davis2"
+      }
+    ]
+  },
+
+  "files": [
+    "index.js",
+    "platform.js",
+    "fetcher.js",
+    "parser.js",
+    "registry.js",
+    "accessoryFactory.js",
+    "pluginLogger.js",
+    "package.json",
+    "README.md"
+  ],
+
+  "scripts": {
+    "prepublishOnly": "echo \"Publishing Homebridge Davis plugin\""
   }
 }

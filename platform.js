@@ -1,20 +1,12 @@
-
 const Fetcher = require("./fetcher");
 const Parser = require("./parser");
 const Registry = require("./registry");
 const AccessoryFactory = require("./accessoryFactory");
+const PluginLogger = require("./pluginLogger");
 
 class DavisPlatform {
 
   constructor(log, config, api) {
-
-    // HARD GUARD: prevents duplicate platform instances in same process
-    if (global.__davis2_platform_instance__) {
-      log.warn("Duplicate Davis2 platform instance detected — aborting initialization");
-      return global.__davis2_platform_instance__;
-    }
-
-    global.__davis2_platform_instance__ = this;
 
     this.log = log;
     this.config = config;
@@ -22,14 +14,20 @@ class DavisPlatform {
 
     this.url = config.url;
 
-    this.pollingIntervalSeconds = config.pollingIntervalSeconds || 60;
+    this.pollingIntervalSeconds = config.pollingIntervalSeconds ?? 60;
+    this.staleAfterSeconds = (config.staleAfterMinutes ?? 5) * 60;
 
-    this.staleAfterSeconds = (config.staleAfterMinutes || 5) * 60;
+    this.inputTemperatureUnit = config.inputTemperatureUnit;
 
-    this.txids = config.txids || [1];
+    this.enableExternalSensors = config.enableExternalSensors ?? false;
+    this.enableInternalSensors = config.enableInternalSensors ?? false;
+    this.enableAirLink = config.enableAirLink ?? false;
 
-    // raw debug toggle from config
-    this.verboseLogging = config.verboseLogging ?? false;
+    this.txids = Array.isArray(config.txids) && config.txids.length
+      ? config.txids.filter(Number.isFinite)
+      : [1];
+
+    this.logger = new PluginLogger(log, config);
 
     this.fetcher = null;
     this.parser = null;
@@ -38,52 +36,59 @@ class DavisPlatform {
 
     this.pendingCachedAccessories = [];
 
-    this.log.info("Homebridge-Davis-2 initializing");
-
     this.api.on("didFinishLaunching", () => {
       this.initialize();
     });
   }
 
-  /**
-   * CENTRALIZED VERBOSE CHECK
-   * fixes: "isVerbose is not a function"
-   */
-  isVerbose() {
-    return this.verboseLogging === true;
-  }
-
   configureAccessory(accessory) {
-
     if (this.factory) {
       this.factory.configureAccessory(accessory);
     } else {
       this.pendingCachedAccessories.push(accessory);
-      this.log.debug("configureAccessory buffered (factory not ready)");
     }
   }
 
   initialize() {
 
+    this.logger.debug("Platform", "Initialize hit");
+
     this.parser = new Parser(this);
     this.registry = new Registry(this);
     this.factory = new AccessoryFactory(this);
 
-    // flush cached accessories safely
     for (const accessory of this.pendingCachedAccessories) {
       this.factory.configureAccessory(accessory);
     }
 
     this.pendingCachedAccessories = [];
 
+    // ✅ NEW: startup config INFO log
+    this.logger.info(
+      "Platform",
+      "Config loaded | ext=%s int=%s air=%s unit=%s txids=%j interval=%ss stale=%sm",
+      this.enableExternalSensors,
+      this.enableInternalSensors,
+      this.enableAirLink,
+      this.inputTemperatureUnit,
+      this.txids,
+      this.pollingIntervalSeconds,
+      this.staleAfterSeconds / 60
+    );
+
     this.fetcher = new Fetcher(this);
     this.fetcher.start();
+
+    this.logger.debug("Platform", "Fetcher started");
   }
 
   onFetchSuccess(payload) {
 
     const parsed = this.parser.parse(payload);
-    if (!parsed) return;
+
+    if (!parsed) {
+      return;
+    }
 
     this.registry.update(parsed);
     this.factory.updateAll();

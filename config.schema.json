@@ -10,12 +10,6 @@
 
     "properties": {
 
-      "name": {
-        "title": "Platform Name",
-        "type": "string",
-        "default": "Davis Weather System"
-      },
-
       "url": {
         "title": "Davis Local API URL",
         "type": "string",
@@ -23,7 +17,7 @@
       },
 
       "pollingIntervalSeconds": {
-        "title": "Polling Interval",
+        "title": "Polling Interval (seconds)",
         "type": "integer",
         "default": 60,
         "minimum": 10
@@ -36,7 +30,7 @@
         "minimum": 1
       },
 
-      "temperatureUnit": {
+      "inputTemperatureUnit": {
         "title": "Sensor Temperature Unit",
         "type": "string",
         "description": "What unit comes off the sensor? (If values seem wrong, try the other one)",
@@ -58,25 +52,25 @@
       },
 
       "enableExternalSensors": {
-        "title": "Enable External Sensors",
+        "title": "Enable External Sensors (including Airlink's temperature and humidity)",
         "type": "boolean",
-        "default": true
+        "default": false
       },
 
-      "enableInternalSensor": {
+      "enableInternalSensors": {
         "title": "Enable Internal Sensors",
         "type": "boolean",
-        "default": true
+        "default": false
       },
 
       "enableAirLink": {
-        "title": "Enable AirLink",
+        "title": "Enable AirLink Air Quality sensors",
         "type": "boolean",
-        "default": true
+        "default": false
       },
 
-      "debug": {
-        "title": "Enable Verbose Debug Logging",
+      "verboseLogging": {
+        "title": "Enable detailed Debug Logging (Show data dumps)",
         "type": "boolean",
         "default": false
       }
@@ -85,7 +79,7 @@
 
     "required": [
       "url",
-      "temperatureUnit",
+      "inputTemperatureUnit",
       "staleAfterMinutes"
     ]
   }
