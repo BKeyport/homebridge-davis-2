@@ -11,7 +11,6 @@ class AccessoryFactory {
     this.Service = this.api.hap.Service;
 
     this.accessories = new Map();
-    this.lastState = new Map();
   }
 
   configureAccessory(accessory) {
@@ -19,11 +18,6 @@ class AccessoryFactory {
     const uuid = accessory.UUID;
 
     if (this.accessories.has(uuid)) {
-      this.platform.logger.debug(
-        "Factory",
-        "skip cached accessory: %s",
-        accessory.displayName
-      );
       return;
     }
 
@@ -36,28 +30,58 @@ class AccessoryFactory {
     this.accessories.set(uuid, accessory);
   }
 
-  _ensureAccessory(name) {
+  // --------------------------------------------------
+  // Identity + display helpers
+  // --------------------------------------------------
+  _getDisplayName(type, context, txid = null) {
 
-    const uuid = this.api.hap.uuid.generate(name);
+    const base = {
+      "outdoor:temperature": "Outdoor Temperature",
+      "outdoor:humidity": "Outdoor Humidity",
+      "indoor:temperature": "Indoor Temperature",
+      "indoor:humidity": "Indoor Humidity",
+      "air:quality": "Air Quality",
+    };
+
+    let name =
+      base[`${type}:${context}`] ??
+      `${type} ${context}`;
+
+    if (txid != null && (type === "outdoor" || type === "air")) {
+      name += ` (TX${txid})`;
+    }
+
+    return name;
+  }
+
+  _ensureAccessory(type, context = "", txid = null) {
+
+    const key =
+      `davis2::${type}` +
+      (context ? `::${context}` : "") +
+      (txid != null ? `::tx${txid}` : "");
+
+    const uuid = this.api.hap.uuid.generate(key);
 
     let accessory = this.accessories.get(uuid);
 
     if (accessory) {
-      this.platform.logger.debug(
-        "Factory",
-        "reuse accessory: %s",
-        name
-      );
       return accessory;
     }
 
+    const displayName = this._getDisplayName(type, context, txid);
+
     this.platform.logger.debug(
       "Factory",
-      "create accessory: %s",
-      name
+      "create accessory: %s (%s)",
+      displayName,
+      key
     );
 
-    accessory = new this.api.platformAccessory(name, uuid);
+    accessory = new this.api.platformAccessory(
+      displayName,
+      uuid
+    );
 
     this.accessories.set(uuid, accessory);
 
@@ -70,13 +94,10 @@ class AccessoryFactory {
     return accessory;
   }
 
+  // --------------------------------------------------
+  // Sensors
+  // --------------------------------------------------
   _setTemp(accessory, name, value) {
-
-    this.platform.logger.debug(
-      "Factory",
-      "push temp: %s",
-      name
-    );
 
     const service =
       accessory.getService(this.Service.TemperatureSensor) ||
@@ -90,12 +111,6 @@ class AccessoryFactory {
 
   _setHum(accessory, name, value) {
 
-    this.platform.logger.debug(
-      "Factory",
-      "push hum: %s",
-      name
-    );
-
     const service =
       accessory.getService(this.Service.HumiditySensor) ||
       accessory.addService(this.Service.HumiditySensor, name);
@@ -106,103 +121,113 @@ class AccessoryFactory {
     );
   }
 
+  _setAir(accessory, pm2p5) {
+
+    const service =
+      accessory.getService(this.Service.AirQualitySensor) ||
+      accessory.addService(this.Service.AirQualitySensor, "Air Quality");
+
+    const aqi =
+      pm2p5 <= 5 ? 1 :
+      pm2p5 <= 12 ? 2 :
+      pm2p5 <= 35 ? 3 :
+      pm2p5 <= 55 ? 4 : 5;
+
+    service.setCharacteristic(
+      this.Characteristic.AirQuality,
+      aqi
+    );
+
+    this.platform.logger.debug(
+      "Factory",
+      "Air PM2.5=%s AQI=%s",
+      pm2p5,
+      aqi
+    );
+  }
+
+  // --------------------------------------------------
+  // Update loop
+  // --------------------------------------------------
   updateAll() {
 
     const state = this.platform.registry.getState();
 
     if (!state?.data) {
-      this.platform.logger.debug("Factory", "no state data");
       return;
     }
 
     const data = state.data;
 
-    this.platform.logger.debug("Factory", "updateAll start");
+    const allowedUUIDs = new Set();
 
     // ---------------- EXTERNAL ----------------
     if (this.platform.enableExternalSensors) {
 
-      this.platform.logger.debug("Factory", "external enabled");
-
       if (data.temperature != null) {
-        const acc = this._ensureAccessory("Outdoor Temperature");
+        const acc = this._ensureAccessory("outdoor", "temperature", data.txid);
         this._setTemp(acc, "Outdoor Temperature", data.temperature);
+        allowedUUIDs.add(acc.UUID);
       }
 
       if (data.humidity != null) {
-        const acc = this._ensureAccessory("Outdoor Humidity");
+        const acc = this._ensureAccessory("outdoor", "humidity", data.txid);
         this._setHum(acc, "Outdoor Humidity", data.humidity);
+        allowedUUIDs.add(acc.UUID);
       }
-
-    } else {
-      this.platform.logger.debug("Factory", "external disabled");
     }
 
     // ---------------- INTERNAL ----------------
     if (this.platform.enableInternalSensors) {
 
-      this.platform.logger.debug("Factory", "internal enabled");
-
       if (data.internalTemperature != null) {
-        const acc = this._ensureAccessory("Indoor Temperature");
+        const acc = this._ensureAccessory("indoor", "temperature");
         this._setTemp(acc, "Indoor Temperature", data.internalTemperature);
+        allowedUUIDs.add(acc.UUID);
       }
 
       if (data.internalHumidity != null) {
-        const acc = this._ensureAccessory("Indoor Humidity");
+        const acc = this._ensureAccessory("indoor", "humidity");
         this._setHum(acc, "Indoor Humidity", data.internalHumidity);
+        allowedUUIDs.add(acc.UUID);
       }
-
-    } else {
-      this.platform.logger.debug("Factory", "internal disabled");
     }
 
     // ---------------- AIR ----------------
     if (this.platform.enableAirLink && data.airQuality) {
 
-      this.platform.logger.debug("Factory", "air enabled");
-
-      const acc = this._ensureAccessory("Air Quality");
-
-      const pm = data.airQuality.pm2p5;
-
-      const aqi =
-        pm <= 5 ? 0 :
-        pm <= 12 ? 1 :
-        pm <= 35 ? 2 :
-        pm <= 55 ? 3 : 4;
-
-      this._ensureAccessory("Air Quality Sensor Ready");
-
-      this.platform.logger.debug("Factory", "air processed");
-
-    } else {
-      this.platform.logger.debug("Factory", "air disabled or missing");
+      const acc = this._ensureAccessory("air", "quality", data.txid);
+      this._setAir(acc, data.airQuality.pm2p5);
+      allowedUUIDs.add(acc.UUID);
     }
 
-    // ---------------- FINAL SNAPSHOT ----------------
-    this.platform.logger.verbose(
-      "Factory",
-      "PUSH OUT: %j",
-      {
-        external: this.platform.enableExternalSensors ? {
-          temperature: data.temperature,
-          humidity: data.humidity
-        } : null,
+    this.cleanupUnusedAccessories(allowedUUIDs);
+  }
 
-        internal: this.platform.enableInternalSensors ? {
-          temperature: data.internalTemperature,
-          humidity: data.internalHumidity
-        } : null,
+  // --------------------------------------------------
+  // Cleanup
+  // --------------------------------------------------
+  cleanupUnusedAccessories(allowedUUIDs) {
 
-        air: this.platform.enableAirLink && data.airQuality ? {
-          pm2p5: data.airQuality.pm2p5,
-          pm10: data.airQuality.pm10
-        } : null
+    for (const [uuid, accessory] of this.accessories.entries()) {
+
+      if (!allowedUUIDs.has(uuid)) {
+
+        this.platform.logger.debug(
+          "Factory",
+          "remove stale accessory: %s",
+          accessory.displayName
+        );
+
+        this.api.unregisterPlatformAccessories(
+          "homebridge-davis-2",
+          "Davis2",
+          [accessory]
+        );
+
+        this.accessories.delete(uuid);
       }
-    );
-
-    this.platform.logger.debug("Factory", "updateAll end");
+    }
   }
 }
 
