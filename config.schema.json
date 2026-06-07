@@ -9,7 +9,12 @@
     "type": "object",
 
     "properties": {
-
+      "name": {
+         "title": "Platform Name",
+         "type": "string",
+         "default": "Davis Weather"
+    },
+  
       "url": {
         "title": "Davis Local API URL",
         "type": "string",
