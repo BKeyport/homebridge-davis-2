@@ -1,6 +1,6 @@
 {
   "name": "homebridge-davis-2",
-  "version": "0.5.1-beta.3",
+  "version": "0.9.9-beta.1",
   "description": "WeatherLink and AirLink integration for Homebridge",
   "license": "MIT",
   "author": "Brendan Keyport",
@@ -11,7 +11,8 @@
     "homekit",
     "davis",
     "weatherlink",
-    "airlink"
+    "airlink",
+    "supports-hap"
   ],
 
   "engines": {
@@ -35,7 +36,7 @@
   "homebridge": {
     "platforms": [
       {
-        "platform": "Davis2"
+        "platform": "davis2"
       }
     ]
   },
@@ -54,5 +55,10 @@
 
   "scripts": {
     "prepublishOnly": "echo \"Publishing Homebridge Davis plugin\""
+  },
+
+  "funding": {
+    "url" : "http://www.keyport.name"
   }
+
 }
