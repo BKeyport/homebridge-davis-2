@@ -1,6 +1,6 @@
 {
   "name": "homebridge-davis-2",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "WeatherLink and AirLink integration for Homebridge",
   "license": "MIT",
   "author": "Brendan Keyport",
@@ -50,7 +50,8 @@
     "accessoryFactory.js",
     "pluginLogger.js",
     "package.json",
-    "README.md"
+    "README.md",
+    "config.schema.json"
   ],
 
   "scripts": {
