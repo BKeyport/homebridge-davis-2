@@ -87,7 +87,7 @@ class AccessoryFactory {
 
     this.api.registerPlatformAccessories(
       "homebridge-davis-2",
-      "Davis2",
+      "davis2",
       [accessory]
     );
 
@@ -221,7 +221,7 @@ class AccessoryFactory {
 
         this.api.unregisterPlatformAccessories(
           "homebridge-davis-2",
-          "Davis2",
+          "davis2",
           [accessory]
         );
 
