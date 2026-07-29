@@ -6,13 +6,22 @@ This is a Homebridge plugin that allows you to integrate your Davis WeatherLink 
 
 ---
 
-Special note: If you have used any version from 1.0.0 - 1.0.9 - you likely will have to get advanced help or completely reinstall your homebridge. 
+Special note: If you have used any version from 1.0.0 - 1.0.9:
 
-I made a severe error in platform naming, and I have found the only way I can find to reset my homebridge to fix it is reinstall. 
+Apologies for this error - 
 
-If you're getting an error about "not finding a platform" on load, you have the bug. 
+I did a dumb global search and replace. The platform name is supposed to be "Davis2" not "davis2"
 
-My Apologies for the error. 
+If you're getting errors refering to platform missing (example):
+'No plugin was found for the platform "davis2" in your config.json. Please make sure the corresponding plugin is installed correctly.'
+
+Go to JSON config on the main menu:
+ 
+in the davis weather section: 
+you should have "platform": "Davis2" (case sensitive) there. If it says "platform": "davis2" - change it. 
+
+If you get errors after that, please ask for help on discord's generic help channels, I don't know how to fix further.
+
 
 ---
 
