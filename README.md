@@ -6,6 +6,16 @@ This is a Homebridge plugin that allows you to integrate your Davis WeatherLink 
 
 ---
 
+Special note: If you have used any version from 1.0.0 - 1.0.9 - you likely will have to get advanced help or completely reinstall your homebridge. 
+
+I made a severe error in platform naming, and I have found the only way I can find to reset my homebridge to fix it is reinstall. 
+
+If you're getting an error about "not finding a platform" on load, you have the bug. 
+
+My Apologies for the error. 
+
+---
+
 ## Manual Installation
 
 You must have Homebridge already installed, then install the plugin:
@@ -96,4 +106,3 @@ In leiu of donations to me, please donate to a local underprivledged rights type
 Disability rights, Gender equality, etc. 
 
 Thank you for your consideration! 
-

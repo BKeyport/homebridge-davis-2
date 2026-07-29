@@ -1,6 +1,6 @@
 {
   "name": "homebridge-davis-2",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "WeatherLink and AirLink integration for Homebridge",
   "license": "MIT",
   "author": "Brendan Keyport",
