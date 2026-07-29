@@ -18,7 +18,8 @@
       "url": {
         "title": "Davis Local API URL",
         "type": "string",
-        "description": "Example: http://1.2.3.4/v1/current_conditions"
+        "description": "Example: http://1.2.3.4/v1/current_conditions",
+	"default": "http://1.2.3.4/v1/current_conditions"
       },
 
       "pollingIntervalSeconds": {
