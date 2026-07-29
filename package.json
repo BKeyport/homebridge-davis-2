@@ -36,7 +36,7 @@
   "homebridge": {
     "platforms": [
       {
-        "platform": "davis2"
+        "platform": "Davis2"
       }
     ]
   },

@@ -57,7 +57,7 @@ class AccessoryFactory {
   _ensureAccessory(type, context = "", txid = null) {
 
     const key =
-      `davis2::${type}` +
+      `Davis2::${type}` +
       (context ? `::${context}` : "") +
       (txid != null ? `::tx${txid}` : "");
 

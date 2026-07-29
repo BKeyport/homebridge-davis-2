@@ -1,4 +1,4 @@
-const PLATFORM_NAME = "davis2";
+const PLATFORM_NAME = "Davis2";
 const PLUGIN_NAME = "homebridge-davis-2";
 
 const DavisPlatform = require("./platform");
